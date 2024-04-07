@@ -1,0 +1,270 @@
+---
+title: "DIFseq User Guide"
+author: "Fangda Song, Kevin Y. Yip and Yingying Wei"
+package: DIFseq
+output: 
+  BiocStyle::html_document
+bibliography: references.bib 
+csl: nature-biotechnology.csl
+vignette: >
+  %\VignetteIndexEntry{DIFseq_user_guide}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8} 
+---
+
+```{r style, echo = FALSE, results = 'asis'}
+BiocStyle::markdown()
+```
+
+# Introduction
+A growing number of single-cell RNA-sequencing (scRNA-seq) studies collect cells from multiple conditions [@segerstolpe2016single; @arunachalam2020systems; @lin2023atlas]. However, despite the urgent demands, statistical methods that can rigorously quantify the differences between scRNA-seq datasets are still lacking. 
+
+In the bulk RNA-sequencing era, solid statistical methods for calling differentially expressed (DE) genes have been the cornerstone of genomic research, with Limma [@ritchie2015limma], DESeq [@anders2010differential] and edgeR [@mccarthy2012differential] each serving tens of thousands of studies. Nevertheless, these classic methods are not applicable to scRNA-seq data. The main challenge is that although we know the biological condition of each cell---say, whether the cell was collected from a healthy individual or a patient---the cell type label of each cell is unknown. Therefore, for differential inference of scRNA-seq data, we have to simultaneously (a) infer the cell type label of each cell, (b) identify the cell-type-specific DE genes—genes that are DE between conditions in a given cell type and (c) quantify the compositional changes of cell types between conditions, that is, infer differential abundance (DA).
+
+To deal with those problems, we develop DIFferential inference for scRNA-seq data (DIFseq). DIFseq is an interpretable Bayesian hierarchical model to simultaneously adjust batch effects, characterize the cell-type-specific size factors, the count data nature and the dropout events of scRNA-seq data, cluster cells into cell types and quantify the condition effects. Therefore, DIFseq is able to account for all of the uncertainties and rigorously quantify the condition effects on both cell-type-specific gene expression levels and cellular compositions for scRNA-seq data. 
+
+This guide provides step-by-step instructions for applying the DIFseq model to cluster cells and conducting differential expression and abundance analysis.
+
+```{r setup}
+library(DIFseq)
+```
+
+# Data preparation
+We first build a `DIFseq` object via the `CreateDIFseqObject` function. We extend the `SingleCellExperiment` class to store the parameter estimation results of the DIFseq model as the `DIFseq` class. 
+
+Like creating a `SingleCellExperiment` object, we require the raw count matrix, each row representing a gene and each column denoting a cell. In addition, we need to specify batch, condition and sample indices for all the cells via the `batch`, `condition` and `sample` arguments of the `CreateDIFseqObject` function, respectively. In particular, each of these three arguments needs a vector or factor with the same length as the total cell number.
+
+Moreover, if the cell type number is known, we can directly set the cell type number via the `n.celltype` argument. Otherwise, we could select the optimal cell type number by some criterion, like Bayesian information criterion (BIC) or Akaike information criterion (AIC). We will explain more about selecting the optimal cell type number in Section [Model Selection using BIC].
+
+In the following, we take the stored `DIFseq` object---`DIFseq_obj`---as an example to explain the analyzing process by DIFseq. `DIFseq_obj` is a simulation dataset with `r NumBatch(DIFseq_obj)` batches, `r NumCond(DIFseq_obj)` conditions and `r NumSample(DIFseq_obj)` samples. We totally measure `r ncol(DIFseq_obj)` cells and `r nrow(DIFseq_obj)` genes in the simulated dataset.
+
+First, we extract the raw count matrix from `DIFseq_obj` by the inherited method `assay` from the `SingleCellExperiment` class. All the other methods of the `SingleCellExperiment` class can also inherited by our `DIFseq` class. Second, we use a series of utility functions `BatchInd`, `CondInd` and `SampleInd` to obtain the batch, condition and sample indices from `DIFseq_obj`. Finally, we build a new `DIFseq` object by the raw count matrix and indices. Besides, we set the number of cell types as three.
+
+```{r object, message = FALSE}
+library(SingleCellExperiment)
+
+count_data <- assay(DIFseq_obj, "counts")
+batch_ind <- BatchInd(DIFseq_obj)
+cond_ind <- CondInd(DIFseq_obj)
+sample_ind <- SampleInd(DIFseq_obj)
+
+Num_batch <- NumBatch(DIFseq_obj)
+Num_cond <- NumCond(DIFseq_obj)
+Num_celltype <- 3
+
+Object <- CreateDIFseqObject(assay = list(counts = count_data),
+                             batch = batch_ind, condition = cond_ind, sample = sample_ind,
+                             n.celltype = Num_celltype)
+
+```
+
+# Model Fitting
+Once we have created the `DIFseq` object, we apply our proposed Monte-Carlo-Expectation-Maximaization (MCEM) algorithm to conduct statistical inference via the `DIFseq_MCEM` function.
+
+We provide a series of utility functions to adjust the running parameters for the MCEM algorithm. In particular, we combine Monte-Carlo-Expectation steps and stochastic maximization steps in our proposed MCEM algorithm. In E steps, the `MCRep` function controls the number of replicates for the Monte-Carlo sampling. In the stochastic updating of M steps, the `MiniBatch` function allows us to control the mini-batch size of cells in the stochastic M step, while the `EarlyStop` function controls the times of observing non-decreasing log-likelihood to stop the MCEM algorithm. `CheckLike` controls how frequently we check the values of log-likelihood once. Please find more utility functions in the help file `?CheckLike`.
+
+```{r MCEM}
+wkdir <- "../DIFseq_test"
+if(!dir.exists(wkdir)){
+  dir.create(wkdir)
+}
+
+# The default number of replicates for MCE steps
+MCRep(Object)
+
+# The default number of early stop for the algorithm
+EarlyStop(Object)
+
+# Modify some parameters of the MCEM algorithm
+MiniBatch(Object) <- 1000
+CheckLike(Object) <- 3
+
+Object <- DIFseq_MCEM(Object, count = "counts",
+                      working_dir = "../DIFseq_test/")
+
+```
+
+After running the `DIFseq_MCEM` function, the state of `posterior inference` has changed from `FALSE` to `TRUE`. Moreover, it is easy to access the estimated cell type labels using the `CellTypes` function. The function returns a vector of the estimated cell type labels for each cell.
+
+```{r MCEM_res}
+Object
+label_est <- CellTypes(Object)
+table(label_est)
+```
+
+# Visualize the esimated cell type effects, condition effects and batch effects
+To check the estimated parameter values, we visualize the log-scale estimated cell type effects $\alpha_g+\beta_{gk},g=1,2,\cdots,G,k =1,2,3$ by a heatmap. Here, `Baseline` and `TypeEffects` are two functions extracting the baseline gene expression levels and the relative cell type effects from a `DIFseq` object. The `HeatmapEffects` function draws a heatmap for the obtained cell-type-effect matrix `Celltype_effects`. Here, the `ColSideColors` argument gives the colors of each column to annotate different cell types.
+
+```{r celltype_effects, error=TRUE, fig.asp = 1.5, fig.width = 4}
+# Extract the baseline effects and the relative cell type effects from the DIFseq object
+Baseline_effects <- Baseline(Object)
+Type_effects <- TypeEffects(Object)
+Celltype_effects <- Baseline_effects + Type_effects
+
+# Set the column-side colors and the break points for parameter values
+Celltype_color <- rainbow(ncol(Celltype_effects))
+break_celltype <- seq(0,4, length.out = 101)
+
+heatmap_celltype <- HeatmapEffects(Celltype_effects, ColSideColors = Celltype_color, breaks = break_celltype)
+```
+
+Then, we visualize the condition effects for each pair of cell types and conditions. Here, `CondEffects` function extracts the estimated condition effects from the `DIFseq` object.
+```{r cond_effects, error=TRUE, fig.asp = 1.5, fig.width = 4}
+# Extract the relative condition effects from the DIFseq object
+Condition_effects <- CondEffects(Object)
+
+# Set the column-side colors, the color keys and the break points for parameter values
+Condition_color <- c("#fbb4ae","#b3cde3")
+
+color_bar <- cbind(
+  rep(Condition_color, Num_celltype),
+  rep(Celltype_color, each = Num_cond))
+
+break_celltype <- seq(-1,1, length.out = 101)
+colorsChoice <- colorRampPalette(c("#1D78B2","#F2F2F2","#C4012D"))
+celltype_key <- colorsChoice(100)
+
+heatmap_condition <- HeatmapEffects(Condition_effects, ColSideColors = color_bar,
+                      col = celltype_key, breaks = break_celltype)
+```
+
+Also, we visualize the batch effects for each batch. Here, `BatchEffects` function extracts batch effects from the `DIFseq` object.
+```{r batch_effects, error=TRUE, fig.asp = 1.5, fig.width = 4}
+# Extract the relative condition effects from the DIFseq object
+Batch_effects <- BatchEffects(Object)
+
+# Set the column-side colors, the color keys and the break points for parameter values
+Batch_color <- c("#440154", "#FDE725")
+
+break_celltype <- seq(-2.5,2.5, length.out = 101)
+colorsChoice <- colorRampPalette(c("#1D78B2","#F2F2F2","#C4012D"))
+celltype_key <- colorsChoice(100)
+
+heatmap_batch <- HeatmapEffects(Batch_effects, 
+                      ColSideColors = Batch_color,
+                      col = celltype_key, breaks = break_celltype)
+```
+
+# Visualize corrected read counts
+DIFseq is able to impute the missing data caused by dropout events and correct batch effects. As a result, DIFseq provides a version of corrected count data as if scRNA-seq data from different batches were collected from one single experiment. In other words, the corrected count data is free of unwanted batch effects but keeps biological variability across different cell types and conditions. Thus, the corrected count data facilitates the downstream analysis.
+
+Here, we compare the raw count data that suffer from batch effects and dropout events, the inferred expression levels after imputing dropout events, and the corrected count data which remove the batch effects and impute the dropout events. These three types of count matrices are stored in the `assay` slot of the DIFseq object.
+
+```{r heatmap_count, error = TRUE, fig.asp = 0.75, fig.width = 6}
+assays(Object)
+
+raw_count <- assay(Object, "counts")
+imputed_count <- assay(Object, "imputed_count")
+corrected_count <- assay(Object, "corrected_count")
+
+# Ordered by cell types
+order_cells <- order(batch_ind, cond_ind, label_est)
+
+# Set the column-side colors, the color keys and the break points for parameter values
+color_count <- cbind(
+  Celltype_color[label_est[order_cells]],
+  Condition_color[cond_ind],
+  Batch_color[batch_ind])
+
+
+break_count <- seq(0,6, length.out = 101)
+
+heatmap_rawcount <- HeatmapEffects(log1p(raw_count[,order_cells]), ColSideColors = color_count,
+                                   breaks = break_count)
+
+heatmap_imputedcount <- HeatmapEffects(log1p(imputed_count[,order_cells]),
+                                       ColSideColors = color_count,
+                                   breaks = break_count)
+
+heatmap_correctedcount <- HeatmapEffects(log1p(corrected_count[,order_cells]),
+                                         ColSideColors = color_count,
+                                   breaks = break_count)
+```
+
+The column color bar gives the batch, condition and cell-type-label information for each cell.
+
+# Differential expression analysis
+After applying the MCEM algorithm, we identify intrinsic genes and cell-type-specific DE genes by the `DiffExpression` function. Intrinsic genes are differentially expressed across different cell types, while cell-type-specific DE genes are DE across different conditions for a given cell type. The `DiffExpression` function not only controls the overall false discovery rate by the `fdr` argument but also allows us to control the minimum expression proportions. By default, we set the Bayesian FDR at level 0.05 and the minimum expression proportion as 0.10.
+
+Two utility functions `Intrinsic` and `DiffExp` allow us to obtain the identified genes easily. Their outputs are a Boolean vector indicating intrinsic genes and a Boolean matrix indicating cell-type-specific DE genes for each cell type, respectively.
+
+```{r DE}
+Object <- DiffExpression(Object)
+
+Intri_genes <- Intrinsic(Object)
+sum(Intri_genes)
+
+DE_genes <- DiffExp(Object)
+apply(DE_genes, 2, sum)
+```
+
+Here, DIFseq is able to correctly identify all of 60 intrinsic genes and 10 cell-type-specific DE genes for the first cell type and the third cell type with the true FDR equal to 0.
+
+# Differential abundance analysis
+
+In the differential abundance analysis, we first visualize the estimated cell type proportions for each sample by a stacked bar chart. In the simulation dataset, we assume the cell-type proportions are similar under the same condition in two batches, while the second (third) cell type has a larger (smaller) proportion in the first (second) condition.
+
+```{r prop}
+Cell_prop <- Prop(Object)
+BarChartProp(Cell_prop, Color = Celltype_color)
+```
+The bar chart shows that the second (third) cell type has larger (smaller) proportions for the samples belonging to the first condition, Samples 1-5 and 11-15, than those belonging to the second condition, Samples 6-10 and 16-20. Then, we apply rigorous hypothesis tests to conduct differential abundance analysis across batches and conditions. 
+
+```{r DA}
+# Batch 1 vs Batch 2 under Condition 1
+Object <- DiffAbundance(Object, ref = 1, dim = "Pair", subset = c(1,3))
+
+DiffAbund(Object)
+
+# Batch 1 vs Batch 2 under Condition 2
+Object <- DiffAbundance(Object, ref = 1, dim = "Pair", subset = c(1,3))
+
+DiffAbund(Object)
+
+# Condition 1 vs Condition 2 under Batch 1
+Object <- DiffAbundance(Object, ref = 1, dim = "Pair", subset = c(1,2))
+
+DiffAbund(Object)
+
+# Condition 1 vs Condition 2 over both two batches
+Object <- DiffAbundance(Object, ref = 1, dim = "Cond", subset = c(1,2))
+
+DiffAbund(Object)
+```
+
+Differential abundance results are consistent with the simulation setting. In particular, no differential abundance between two batches under the first or second condition. The second and third cell types have differential abundance between two conditions no matter within the first batch or across both two batches.
+
+# Model Selection using BIC
+If we have no prior knowledge about the cell type number, we vary the number of cell types `K` by changing the `n.celltype` slot in the DIFseq object and rerun the MCEM algorithm to compute the corresponding BIC. Finally, the optimal cell type number will achieve the minimum value of BIC. The `BIC_DIFseq` function returns the BIC values in a `DIFseq` object. 
+
+In this example, the underlying true number of cell types is three. For an illustration, we vary `K` from 2 to 5.
+
+```{r BIC}
+K_vec <- 2:5
+BIC_values <- rep(NA, length(K_vec))
+
+DIFseq_list <- list()
+
+for(k in K_vec){
+
+  message("Running for the number of cell types K = ",k,"...")
+  DIFseq_list[[k-1]] <- Object
+  DIFseq_list[[k-1]]@n.celltype <- k
+
+  DIFseq_list[[k-1]] <- DIFseq_MCEM(DIFseq_list[[k-1]], count = "counts",
+                                    working_dir = "../DIFseq_test/", correction = FALSE)
+
+  BIC_values[k-1] <- BIC_DIFseq(DIFseq_list[[k-1]])
+  message("The BIC at K = ",k," is ", BIC_values[k-1],".")
+}
+
+plot(K_vec, BIC_values,
+     xlab="cell type number", ylab="BIC",
+     main="BIC plot", type="b")
+```
+
+The BIC attains the minimum at K = 3, thus correctly recovering the true cell type number by BIC.
+
+# References {-}
+
+<div id="refs"></div>
