@@ -146,8 +146,7 @@
 #' show,DIFseq-method
 #'
 #' @examples
-# #' example(Milo, echo=FALSE)
-#' show(DIFseq)
+#' show(DIFseq_obj)
 NULL
 
 #' @export

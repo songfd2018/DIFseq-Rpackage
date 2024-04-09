@@ -3,7 +3,7 @@
 #' The function \code{HeatmapEffects} enables to visualize the estimated parameter values or read count matrix
 #'
 #' @param matrix A matrix of estimated parameters or a read count matrix to visualize on the heatmap.
-#' @param color_bar A character vector of length ncol(x) containing the color names for a
+#' @param ColSideColors A character vector of length ncol(x) containing the color names for a
 #' horizontal side bar that may be used to annotate the columns of x
 #' @param col A vector of colors to fill each cell of the heatmap based on their corresponding values
 #' @param breaks A set of breakpoints for the color key: must have one more breakpoints than the color key

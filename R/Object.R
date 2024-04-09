@@ -8,12 +8,15 @@
 #' @param ... Arguments passed to the DIFseq constructor to fill the slots of the
 #' base class. This should be either a \code{\linkS4class{SingleCellExperiment}}
 #' or a feature-by-cell matrix
-#' @param Batch A vector with the same length as the number of cells indicating
+#' @param batch A vector with the same length as the number of cells indicating
 #' the batch label of each cell. By default, all the cells are assigned to
 #' the same batch.
-#' @param Condition A vector with the same length as the number of cells indicating
+#' @param condition A vector with the same length as the number of cells indicating
 #' the condition label of each cell. By default, all the cells are assigned to
 #' the same condition.
+#' @param sample A vector with the same length as the number of cells indicating
+#' the sample label of each cell. By default, each batch-condition pair is regarded
+#' as a sample.
 #' @param n.celltype the number of cell type
 #' @param hyperparam A list of hyper-parameter values
 #' @param iter A list of parameter to control the EM algorithm
