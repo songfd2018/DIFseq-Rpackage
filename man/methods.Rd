@@ -150,7 +150,7 @@ Note that the first column is zero as the first batch is taken as the reference 
 }
 
 \examples{
-show(DIFseq)
+show(DIFseq_obj)
 }
 \author{
 Fangda Song, Kevin Y. Yip and Yingying Wei

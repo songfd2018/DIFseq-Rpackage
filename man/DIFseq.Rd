@@ -22,19 +22,23 @@ CreateDIFseqObject(
 base class. This should be either a \code{\linkS4class{SingleCellExperiment}}
 or a feature-by-cell matrix}
 
+\item{batch}{A vector with the same length as the number of cells indicating
+the batch label of each cell. By default, all the cells are assigned to
+the same batch.}
+
+\item{condition}{A vector with the same length as the number of cells indicating
+the condition label of each cell. By default, all the cells are assigned to
+the same condition.}
+
+\item{sample}{A vector with the same length as the number of cells indicating
+the sample label of each cell. By default, each batch-condition pair is regarded
+as a sample.}
+
 \item{n.celltype}{the number of cell type}
 
 \item{hyperparam}{A list of hyper-parameter values}
 
 \item{iter}{A list of parameter to control the EM algorithm}
-
-\item{Batch}{A vector with the same length as the number of cells indicating
-the batch label of each cell. By default, all the cells are assigned to
-the same batch.}
-
-\item{Condition}{A vector with the same length as the number of cells indicating
-the condition label of each cell. By default, all the cells are assigned to
-the same condition.}
 }
 \value{
 A DIFseq object
