@@ -40,7 +40,7 @@ install_github("songfd2018/DIFseq-Rpackage") # install BUSseq
 
 ## Demo
 
-Please check the user's guide for the detailed instructions on how to use the package by running the following code in the `R` session:
+Please check the user's guide for detailed instructions on how to use the package by running the following code in the `R` session:
 
 ```
 vignette("DIFseq_user_guide",package="DIFseq")  # view the vignettes
