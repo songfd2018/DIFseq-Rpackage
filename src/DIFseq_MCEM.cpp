@@ -18,9 +18,28 @@
 #include <R.h>
 #include <Rinternals.h>
 
-#endif
+#elif __linux__
 
-#ifdef linux
+#include <iostream>
+#include <iomanip>
+#include <fstream>
+#include <math.h> // pow, sqrt, lgamma
+#include <cmath> //
+#include "omprng.h"
+# include <chrono> // time
+#include <stdlib.h>
+#include <string>
+#include <stdio.h>
+#include <sys/stat.h>  //mkdir
+#include <sys/types.h>
+#include <algorithm>    // sort
+#include <vector>
+#include <gsl/gsl_sf_psi.h> // trigamma and digamma
+#include <gsl/gsl_sort.h>
+#include <R.h>
+#include <Rinternals.h>
+
+#elif __APPLE__
 
 #include <iostream>
 #include <iomanip>
