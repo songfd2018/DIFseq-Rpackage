@@ -39,7 +39,7 @@
 #include <R.h>
 #include <Rinternals.h>
 
-#elif __APPLE__
+#else
 
 #include <iostream>
 #include <iomanip>

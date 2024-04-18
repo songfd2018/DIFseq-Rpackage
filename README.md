@@ -35,7 +35,7 @@ From an `R` session, type:
 
 ```
 require(devtools)
-install_github("songfd2018/DIFseq-Rpackage") # install BUSseq
+install_github("songfd2018/DIFseq-Rpackage") # install DIFseq
 ```
 
 ## Demo
