@@ -6,7 +6,7 @@ Author: Fangda Song <songfangda@cuhk.edu.cn>, Yingying Wei <ywei@cuhk.edu.hk>
 Maintainer: Fangda Song <songfangda@cuhk.edu.cn>
 Description:
     DIFferential Inference for Single-cell RNA-sequencing Data (DIFseq) is an interpretable Bayesian hierarchical model to rigorously quantify the condition effects on both cellular compositions and cell-type-specific gene expression levels for scRNA-seq data.
-License: GPL (>= 2)
+License: MIT License
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.2.3

@@ -29,6 +29,18 @@ Here, we develop DIFferential inference for scRNA-seq data (DIFseq), a statistic
 - [tests](./tests): sample code for the demo dataset.
 - [vignettes](./vignettes): source code for the user's guide.
 
+
+
+## System Requirements
+
+#### Hardware Requirements
+
+The `BUSseq` package works on a standard personal computer (PC). The runtimes reported below were generated on an Ubuntu 18.04 operating system by a PC desktop with 8 GB RAM and 8 cores of 2.6 GHz.
+
+### Software Requirements
+
+The package supports *Windows* operating systems. It has been tested on Windows 10 Enterprise. Before installing the `BUSseq` package, users should have installed `R` with version 4.1 or higher. The users should also install [`Rtools`](https://cran.r-project.org/bin/windows/Rtools/).
+
 ## Installation Guide
 
 From an `R` session, type:
@@ -37,6 +49,8 @@ From an `R` session, type:
 require(devtools)
 install_github("songfd2018/DIFseq-Rpackage") # install DIFseq
 ```
+
+It takes approximately several minutes to install. 
 
 ## Demo
 

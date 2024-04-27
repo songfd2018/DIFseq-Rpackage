@@ -265,6 +265,11 @@ plot(K_vec, BIC_values,
 
 The BIC attains the minimum at K = 3, thus correctly recovering the true cell type number by BIC.
 
+The R version and package dependencies are listed as follows:
+```{r}
+sessionInfo()
+```
+
 # References {-}
 
 <div id="refs"></div>
