@@ -77,7 +77,7 @@
 \alias{show,DIFseq-method}
 \title{Methods for extracting statistical inference results from a DIFseq object}
 \description{
-Get or set methods for Milo object slots. Generally speaking these methods
+Get or set methods for DIFseq object slots. Generally speaking these methods
 are used internally, but they allow the user to assign their own externally computed
 values - should be used \emph{with caution}.
 }

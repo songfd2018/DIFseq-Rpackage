@@ -38,7 +38,7 @@ The package supports *Windows* operating systems. It has been tested on Windows 
 
 ## Installation Guide
 
-From an `R` session, type:
+From an `R` session, please type:
 
 ```
 install.packages("devtools")
@@ -59,11 +59,9 @@ install_github("songfd2018/DIFseq-Rpackage") # install DIFseq
 
 # Install DIFseq with building the vignette
 # install_github("songfd2018/DIFseq-Rpackage", build_vignettes = TRUE)
-
 ```
 
 It takes about two minutes to install the package without building the vignette, and the vignette in the html format can be viewed [here](https://htmlpreview.github.io/?https://github.com/songfd2018/DIFseq-Rpackage/blob/main/vignettes/DIFseq%20User%20Guide.html). Alternatively, the package can also be installed with building the vignette. However, it may take about half an hour to install and build the package.
-
 
 ## Demo
 
