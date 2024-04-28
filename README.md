@@ -7,9 +7,6 @@
 - [System Requirements](#system-requirements)
 - [Installation Guide](#installation-guide)
 - [Demo](#demo)
-- [Instructions for use](#instructions-for-use)
-- [License](./LICENSE)
-- [Citation](#citation)
 
 ## Overview
 
@@ -55,22 +52,24 @@ BiocManager::install("S4Vectors")
 BiocManager::install("SingleCellExperiment")
 BiocManager::install("SummarizedExperiment")
 
-
 library(devtools)
-
-# Install DIFseq with building the vignette
-install_github("songfd2018/DIFseq-Rpackage", build_vignettes = TRUE)
 
 # Install DIFseq without building the vignette
 install_github("songfd2018/DIFseq-Rpackage") # install DIFseq
+
+# Install DIFseq with building the vignette
+# install_github("songfd2018/DIFseq-Rpackage", build_vignettes = TRUE)
+
+
 ```
 
-It takes about two minutes to install. 
+It takes about two minutes to install the package without building the vignette, and the vignette in the html format can be downloaded [here](./vignettes/DIFseq%20User%20Guide.html) . Alternatively, the package can also be installed with building the vignette. However, it may take about half an hour to install and build the package.
 
 ## Demo
 
 Please check the user's guide for detailed instructions on how to use the package by running the following code in the `R` session:
 
 ```
+library(DIFseq)
 vignette("DIFseq_user_guide",package="DIFseq")  # view the vignettes
 ```
