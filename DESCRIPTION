@@ -24,7 +24,7 @@ Imports:
     Matrix,   
     S4Vectors, 
     methods,
-    Pandoc
+    pandoc
 Suggests: 
     BiocNeighbors, 
     BiocParallel, 
