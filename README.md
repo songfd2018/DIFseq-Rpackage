@@ -29,8 +29,6 @@ Here, we develop DIFferential inference for scRNA-seq data (DIFseq), a statistic
 - [tests](./tests): sample code for the demo dataset.
 - [vignettes](./vignettes): source code for the user's guide.
 
-
-
 ## System Requirements
 
 #### Hardware Requirements
@@ -46,11 +44,28 @@ The package supports *Windows* operating systems. It has been tested on Windows 
 From an `R` session, type:
 
 ```
-require(devtools)
+install.packages("devtools")
+
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("BiocGenerics")
+BiocManager::install("edgeR")
+BiocManager::install("S4Vectors")
+BiocManager::install("SingleCellExperiment")
+BiocManager::install("SummarizedExperiment")
+
+
+library(devtools)
+
+# Install DIFseq with building the vignette
+install_github("songfd2018/DIFseq-Rpackage", build_vignettes = TRUE)
+
+# Install DIFseq without building the vignette
 install_github("songfd2018/DIFseq-Rpackage") # install DIFseq
 ```
 
-It takes approximately several minutes to install. 
+It takes about two minutes to install. 
 
 ## Demo
 
