@@ -3133,10 +3133,31 @@ void DIFseq_MCEM(int *Y_vec, int* Dim, int* cell_ind,
             if (exist_control == 0) {
 
                 // Extract the genes with the first 100 smallest QBF as control genes
-                size_t* smallest_index = new size_t[Num_control_genes];
-                int stage_sort;
-                stage_sort = gsl_sort_smallest_index(smallest_index, Num_control_genes, qvalue, 1, G);
+                // size_t* smallest_index = new size_t[Num_control_genes];
+                // int stage_sort;
+                // stage_sort = gsl_sort_smallest_index(smallest_index, Num_control_genes, qvalue, 1, G);
 
+
+                vector<double> vec_qvalue;
+                for (int g = 0; g < G; g++) {
+                    copy(qvalue, qvalue + G, back_inserter(vec_qvalue));
+                }
+                sort(vec_qvalue.begin(), vec_qvalue.end());
+
+                double q_thres = vec_qvalue[Num_control_genes];
+
+                for (int g = 0; g < G; g++) {
+                    if (qvalue[g] < q_thres) {
+                        control_genes[g] = 1;
+                        for (int t = 0; t < T; t++) {
+                            for (int k = 0; k < K; k++) {
+                                eta[g][t * K + k] = 0.0;
+                            }
+                        }
+                    }
+                }
+
+                /*
                 for (int i = 0; i < Num_control_genes; i++) {
                     int g = smallest_index[i];
                     control_genes[g] = 1;
@@ -3147,6 +3168,7 @@ void DIFseq_MCEM(int *Y_vec, int* Dim, int* cell_ind,
                     }
                     // cout << "Gene " << smallest_index[i] << " is selected as a control gene!" << endl;
                 }
+                */
 
                 // record the initial value of eta
                 out_file = output_dir + "eta_initial.txt";
@@ -3185,7 +3207,7 @@ void DIFseq_MCEM(int *Y_vec, int* Dim, int* cell_ind,
                 // }
                 // post_File.close();
 
-                delete[] smallest_index;
+                // delete[] smallest_index;
             }
 
             // Switch the major cell type with the reference cell type
